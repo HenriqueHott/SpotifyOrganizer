@@ -1,5 +1,6 @@
 import model.error.err as err
 import statistics
+import pandas as pd
 
 class Metadata():
     def __init__(self):
@@ -32,71 +33,81 @@ class Metadata():
         a = None
         
 class MetadataList():
+    """ Class to list metadata information in a Pandas DataFrame"""
     def __init__(self) -> None:
-        self.music_id_list = []
-        self.danceability_list = []
-        self.energy_list = []
-        self.loudness_list = []
-        self.speechiness_list = []
-        self.acousticness_list = []
-        self.instrumentalness_list = []
-        self.liveness_list = []
-        self.valence_list = []
-        self.tempo_list = []
-        self.duration_ms_list = []
+      self.fields= [
+        'music_id',
+        'danceability',
+        'energy',
+        'loudness',
+        'speechiness',
+        'acousticness'
+        'instrumentalness',
+        'liveness',
+        'valence',
+        'tempo',
+        'duration_ms',
+      ]
+
+    self.metadataFrame = pd.DataFrame(columns=self.fields)
+
         
     def Add(self, meta: Metadata) -> None:
-        self.music_id_list.append(meta.music_id)
-        self.danceability_list.append(meta.danceability)
-        self.energy_list.append(meta.energy)
-        self.loudness_list.append(meta.loudness)
-        self.speechiness_list.append(meta.speechiness)
-        self.acousticness_list.append(meta.acousticness)
-        self.instrumentalness_list.append(meta.instrumentalness)
-        self.liveness_list.append(meta.liveness)
-        self.valence_list.append(meta.valence)
-        self.tempo_list.append(meta.tempo)
-        self.duration_ms_list.append(meta.duration_ms)
+        self.metadataFrame = self.metadataFrame.append(
+            pd.Series([
+                meta.music_id,
+                meta.danceability,
+                meta.energy,
+                meta.speechiness,
+                meta.acousticness,
+                meta.instrumentalness,
+                meta.liveness,
+                meta.valence,
+                meta.tempo,
+                meta.duration_ms
+                
+            ], index=self.fields)
+        )
         
     def Get(self, index: int) -> tuple(Metadata, err.Error):
         if index < 0:
             return Metadata(), err.Error('Invalid index')
         
-        if self.music_id_list is None or index >= len(self.music_id_list):
+        if index >= len(list(self.metadataFrame.index)):
             return Metadata(), err.Error('Null list or length smaller than the index requested')
         
-        meta = Metadata()
-        meta.music_id = self.music_id_list[index]
-        meta.danceability = self.danceability_list[index]
-        meta.energy = self.energy_list[index]
-        meta.loudness = self.loudness_list[index]
-        meta.speechiness = self.speechiness_list[index]
-        meta.acousticness = self.acousticness_list[index]
-        meta.instrumentalness = self.instrumentalness_list[index]
-        meta.liveness = self.liveness_list[index]
-        meta.valence = self.valence_list[index]
-        meta.tempo = self.tempo_list[index]
-        meta.duration_ms = self.duration_ms_list[index]
+        row = self.metadataFrame.iloc[index]
+        meta.music_id = row['music_id']
+        meta.danceability = row['danceability']
+        meta.energy = row['energy']
+        meta.loudness = row['loudness']
+        meta.speechiness = row['speechiness']
+        meta.acousticness = row['acousticness']
+        meta.instrumentalness = row['instrumentalness']
+        meta.liveness = row['liveness']
+        meta.valence = row['valence']
+        meta.tempo = row['tempo']
+        meta.duration_ms = row['']
         
         return meta, None
     
     def GetByMusicID(self, music_id: int) -> tuple(Metadata, err.Error):
-        for index, meta_id in enumerate(self.music_id_list):
-            if meta_id == music_id:
-                return self.Get(index)
+        indexes = self.metadataFrame.index[self.metadataFrame['music_id']].tolist()
+
+        if indexes > 0:
+            return self.Get(indexes[0])
         
         return Metadata(), err.Error('Music metadata was not found')
         
     def Len(self) -> int:
-        return len(MetadataList)
+        return len(list(self.metadataFrame.index))
     
     def GetMedia(self) -> tuple(Metadata, err.Error):
-        if self.music_id_list is None or len(self.music_id_list) == 0:
+        if len(list(self.metadataFrame.index)) == 0:
             return None, err.Error('Null list')
         
         # Fazer sistema de rankeamento, pegar o TIPO da musica
         # Desvio Padrão
-        
         metadata = Metadata()
         metadata.danceability = float("{:.3f}".format(statistics.fmean(self.danceability_list)))
         metadata.energy = float("{:.3f}".format(statistics.fmean(self.energy_list)))
@@ -133,13 +144,4 @@ class MetadataList():
         return metadata, None
     
     def Sort(self) -> None:
-        self.danceability_list.sort()
-        self.energy_list.sort()
-        self.loudness_list.sort()
-        self.speechiness_list.sort()
-        self.acousticness_list.sort()
-        self.instrumentalness_list.sort()
-        self.liveness_list.sort()
-        self.valence_list.sort()
-        self.tempo_list.sort()
-        self.duration_ms_list.sort()
+        self.metadataFrame.sort_values(by='', kind='quicksort')
